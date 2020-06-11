@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 public class playerMovement : MonoBehaviour
@@ -9,15 +10,22 @@ public class playerMovement : MonoBehaviour
     public bool isGrounded = false;
     private Transform healthTransform;
     private HealthSystem healthSystem;
+    private HingeJoint2D joint;
+
+    public Rigidbody2D body2d;
 
     public Transform healthbarPf;
     // Start is called before the first frame update
     void Start()
     {
+
         healthSystem = new HealthSystem(100);
+        body2d = GetComponent<Rigidbody2D>();
 
         healthTransform = Instantiate(healthbarPf, new Vector3(gameObject.transform.position.x, gameObject.transform.position.y+1.2f), Quaternion.identity);
+
         Healthbar healthbar = healthTransform.GetComponent<Healthbar>();
+       
         healthbar.Setup(healthSystem);
     }
 
@@ -33,6 +41,11 @@ public class playerMovement : MonoBehaviour
     void Jump(){
         if(Input.GetKey("w") && isGrounded == true){
             gameObject.GetComponent<Rigidbody2D>().AddForce(new Vector2(0f,jumpFoce),ForceMode2D.Impulse);
+        }else if(Input.GetKeyDown("w") && isGrounded == false)
+        {
+            joint = gameObject.AddComponent<HingeJoint2D>();
+            joint.anchor = new Vector2(-0.003f, 0.334f);
+            transform.GetComponent<Pendulum>().SetPendulum();
         }
     }
     void OnCollisionEnter2D(Collision2D collision)
