@@ -11,6 +11,8 @@ public class ScoreManager : MonoBehaviour
     int score;
     int specialScore;
     // Start is called before the first frame update
+
+
     void Start()
     {
         if(instance == null)
@@ -28,5 +30,10 @@ public class ScoreManager : MonoBehaviour
     {
         specialScore += value;
         specialtext.text = "X" + specialScore.ToString();
+    }
+
+    public int GetSpecialScore()
+    {
+        return specialScore;
     }
 }

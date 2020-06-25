@@ -7,10 +7,17 @@ public class playerMovement : MonoBehaviour
 {
     public float speed = 10.4f;
     public float jumpFoce = 4f;
+
     public bool isGrounded = false;
+    private bool pendulum = false;
+
     private Transform healthTransform;
+
     private HealthSystem healthSystem;
+    private ScoreManager scoring;
+
     private HingeJoint2D joint;
+    private GameObject pendulumArm;
 
     public Rigidbody2D body2d;
 
@@ -18,7 +25,10 @@ public class playerMovement : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        pendulumArm = gameObject.transform.GetChild(1).gameObject;
+        pendulumArm.SetActive(false);
 
+        scoring = GameObject.Find("ScoreManager").GetComponent<ScoreManager>();
         healthSystem = new HealthSystem(100);
         body2d = GetComponent<Rigidbody2D>();
 
@@ -33,19 +43,25 @@ public class playerMovement : MonoBehaviour
     void FixedUpdate()
     {
         Jump();
-        Vector3 movement = new Vector3(Input.GetAxis("Horizontal"),0f,0f);
-        transform.position += movement * Time.deltaTime * speed;
+        if (!pendulum)
+        {
+            Vector3 movement = new Vector3(Input.GetAxis("Horizontal"), 0f, 0f);
+            transform.position += movement * Time.deltaTime * speed;
+        }
+        if (Input.GetKey("w") && isGrounded == true)
+        {
+            gameObject.GetComponent<Rigidbody2D>().AddForce(new Vector2(0f, jumpFoce), ForceMode2D.Impulse);
+
+        }
+
         healthTransform.position = new Vector3(transform.position.x, transform.position.y + 1.2f);
     }
 
     void Jump(){
-        if(Input.GetKey("w") && isGrounded == true){
-            gameObject.GetComponent<Rigidbody2D>().AddForce(new Vector2(0f,jumpFoce),ForceMode2D.Impulse);
-        }else if(Input.GetKeyDown("w") && isGrounded == false)
+   
+        if (Input.GetKeyDown("w") && isGrounded == false && scoring.GetSpecialScore() > 0 && pendulum == false)
         {
-            joint = gameObject.AddComponent<HingeJoint2D>();
-            joint.anchor = new Vector2(-0.003f, 0.334f);
-            transform.GetComponent<Pendulum>().SetPendulum();
+            StartCoroutine(Pendulum());
         }
     }
     void OnCollisionEnter2D(Collision2D collision)
@@ -54,5 +70,22 @@ public class playerMovement : MonoBehaviour
         {
             healthSystem.Damage(10);
         }
+    }
+
+    IEnumerator Pendulum()
+    {
+        body2d.constraints = RigidbodyConstraints2D.None;
+        pendulum = true;
+        pendulumArm.SetActive(true);
+        joint = gameObject.AddComponent<HingeJoint2D>();
+        joint.anchor = new Vector2(-0.003f, 0.334f);
+        transform.GetComponent<Pendulum>().SetPendulum();
+        yield return new WaitForSeconds(3);
+        transform.rotation = Quaternion.Euler(new Vector3(0,0,0));
+        pendulum = false;
+        pendulumArm.SetActive(false);
+        Destroy(joint);
+        body2d.angularVelocity = 0;
+        body2d.constraints = RigidbodyConstraints2D.FreezeRotation;
     }
 }
